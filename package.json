@@ -1,0 +1,46 @@
+{
+  "name": "autocomplete",
+  "displayName": "autocomplete",
+  "description": "",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+    
+  ],
+  "activationEvents": [
+    "onLanguage:typescript",
+    "onLanguage:javascript",
+    "onLanguage:python",
+    "onLanguage:java"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Ollama Autocomplete JS Configuration",
+      "properties": {
+        "autocompleter.ollamaHost": {
+          "type": "string",
+          "default": "http://localhost:11434",
+          "description": "The URL of your local Ollama server."
+        },
+        "autocompleter.ollamaModel": {
+          "type": "string",
+          "default": "qwen2.5-coder:1.5b",
+          "description": "The Ollama model to use for autocomplete suggestions (e.g., 'codellama', 'deepseek-coder')."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "node ./test/runTest.js"
+  },
+  "devDependencies": {
+    "@vscode/test-electron": "^2.3.4",
+    "eslint": "^8.47.0"
+  }
+}
