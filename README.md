@@ -58,10 +58,5 @@ Calling out known issues can help limit users from opening duplicate issues agai
 
 [![autocomplete 4](imgs/img4.png)]
 
-## Release Notes
-
-### 0.0.4
-
-Initial public release.
 
 **Enjoy!**

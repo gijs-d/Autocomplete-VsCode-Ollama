@@ -71,7 +71,7 @@ class OllamaCompletionProvider {
       const suggestions = this.splitSugestions(
         generatedText.split('\n')[0],
         currentLinePrefixToCursor.split(/\W+/g)?.at(-1)
-      );
+      ).filter((suggestion, i, arr) => arr.indexOf(suggestion) === i);
 
       const completionItems = suggestions.map((suggestion) => {
         const completionItem = new vscode.CompletionItem(
@@ -125,7 +125,7 @@ class OllamaCompletionProvider {
     let inSingleQuote = false;
     let inDoubleQuote = false;
     let inBacktick = false;
-    
+
     for (const char of text) {
       if (char === "'" && !inDoubleQuote && !inBacktick) {
         inSingleQuote = !inSingleQuote;

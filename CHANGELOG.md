@@ -18,3 +18,9 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Customizable settings for Ollama host and model.
 - Suggestions are now split by character delimiters and added to the standard VS Code dropdown suggestion list.
 - Automatically closes open brackets and quotes at the end of a suggestion to maintain code integrity.
+
+## [0.0.2] - 2025-08-23
+
+### Added
+
+- Filter out duplicate suggestions. 
