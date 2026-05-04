@@ -50,13 +50,5 @@ Calling out known issues can help limit users from opening duplicate issues agai
 
 ## Screenshots
 
-[![autocomplete 1](imgs/img1.png)]
-
-[![autocomplete 2](imgs/img2.png)]
-
-[![autocomplete 3](imgs/img3.png)]
-
-[![autocomplete 4](imgs/img4.png)]
-
 
 **Enjoy!**

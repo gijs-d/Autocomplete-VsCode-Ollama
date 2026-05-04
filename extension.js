@@ -1,11 +1,17 @@
 const vscode = require('vscode');
 const path = require('path');
-
+const { execSync } = require('child_process');
 /**
  * A simple CompletionItemProvider that uses Ollama for suggestions.
  */
 class OllamaCompletionProvider {
   async provideCompletionItems(document, position, token, context) {
+    const controller = new AbortController();
+    token.onCancellationRequested(() => {
+      controller.abort();
+      console.log('Ollama aanvraag afgebroken door gebruiker (verder getypt)');
+    });
+
     const config = vscode.workspace.getConfiguration('autocompleter');
     const ollamaHost = config.get('ollamaHost', 'http://localhost:11434');
     const ollamaModel = config.get('ollamaModel', 'qwen2.5-coder:1.5b');
@@ -27,6 +33,7 @@ class OllamaCompletionProvider {
     try {
       const response = await fetch(ollamaApiUrl, {
         method: 'POST',
+        signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -36,7 +43,7 @@ class OllamaCompletionProvider {
           suffix: suffix + '/n',
           stream: false,
           options: {
-            temperature: 0.01,
+            temperature: 0,
             num_predict: 256,
             stop: [
               '<|file_separator|>',
@@ -46,13 +53,14 @@ class OllamaCompletionProvider {
               '\n\n',
               '\n',
             ],
-            num_ctx: 32768,
+            num_ctx: 8192, //32768,
           },
         }),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
+
         vscode.window.showErrorMessage(`Ollama API error: ${response.status} - ${errorText}`);
         console.error(`Ollama API error: ${response.status} - ${errorText}`);
         return [];
@@ -76,7 +84,7 @@ class OllamaCompletionProvider {
       const completionItems = suggestions.map((suggestion) => {
         const completionItem = new vscode.CompletionItem(
           suggestion,
-          vscode.CompletionItemKind.Snippet
+          vscode.CompletionItemKind.Text
         );
 
         completionItem.insertText = suggestion;
@@ -90,8 +98,13 @@ class OllamaCompletionProvider {
       });
 
       console.log('suggestions', suggestions);
-      return completionItems;
+      return new vscode.CompletionList(completionItems, true);
+      //return completionItems;
     } catch (error) {
+      if (error.name === 'AbortError') {
+        return [];
+      }
+
       vscode.window.showErrorMessage(
         `Failed to connect to Ollama: ${error.message}. Please ensure Ollama is running and configured correctly.`
       );
@@ -155,6 +168,67 @@ class OllamaCompletionProvider {
   }
 }
 
+class OllamaGitProvider {
+  async generateCommitMessage(uri) {
+    try {
+      const gitExtension = vscode.extensions.getExtension('vscode.git')?.exports;
+      if (!gitExtension) return vscode.window.showErrorMessage('Git extensie niet gevonden.');
+
+      const git = gitExtension.getAPI(1);
+      // We pakken de eerste repository die open staat
+   let repo;
+    if (uri && uri.rootUri) {
+      repo = git.repositories.find(r => r.rootUri.toString() === uri.rootUri.toString());
+    } else {
+      repo = git.repositories[0];
+    }
+
+      const projectRoot = repo.rootUri.fsPath;
+      let diff = '';
+
+      try {
+        diff = execSync('git diff --cached', { cwd: projectRoot }).toString();
+      } catch (e) {
+        return vscode.window.showErrorMessage('Kon git diff niet uitvoeren.');
+      }
+
+      if (!diff)
+        return vscode.window.showInformationMessage(
+          'Stage eerst je wijzigingen (+) om een bericht te genereren.'
+        );
+
+      const config = vscode.workspace.getConfiguration('autocompleter');
+
+      await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: 'Ollama schrijft commit bericht...',
+          cancellable: false,
+        },
+        async () => {
+          const response = await fetch(`${config.get('ollamaHost')}/api/generate`, {
+            method: 'POST',
+            body: JSON.stringify({
+              model: config.get('ollamaModel'),
+              prompt: `Write a concise, professional commit message in the 'conventional commits' style (e.g., feat: add login, fix: resolved crash) based on the following diff. Use only one line and do not include any other text or explanations:\n\n${diff}`,
+              stream: false,
+              options: {
+                temperature: 0.5,
+                num_ctx: 8192,
+              },
+            }),
+          });
+
+          const data = await response.json();
+          repo.inputBox.value = data.response.trim();
+        }
+      );
+    } catch (err) {
+      vscode.window.showErrorMessage('Fout bij genereren: ' + err.message);
+    }
+  }
+}
+
 /**
  * This method is called when your extension is activated.
  * The extension is activated the very first time the command is executed.
@@ -176,6 +250,7 @@ function activate(context) {
     { scheme: 'file', language: 'txt' },
   ];
 
+  // --- 1. Autocomplete Registratie ---
   const provider = new OllamaCompletionProvider();
   const allAlphanumeric = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split(
     ''
@@ -184,11 +259,18 @@ function activate(context) {
     vscode.languages.registerCompletionItemProvider(
       selector,
       provider,
-      // ...allAlphanumeric,
+      ...allAlphanumeric,
       '.',
       ' ',
       '\n'
     )
+  );
+  // 2. Registreer Git Commit Commando
+  const gitProvider = new OllamaGitProvider();
+  context.subscriptions.push(
+    vscode.commands.registerCommand('autocompleter.generateCommit', (uri) => {
+      gitProvider.generateCommitMessage(uri);
+    })
   );
 }
 

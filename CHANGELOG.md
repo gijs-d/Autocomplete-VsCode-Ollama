@@ -24,3 +24,21 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ### Added
 
 - Filter out duplicate suggestions. 
+
+## [0.0.4] - 2026-04-04
+
+Added
+
+    AI Commit Generator: Genereer Engelse commit-berichten met de nieuwe "Sparkle"-knop in het Git-paneel.
+    AbortController: Stopt oude Ollama-taken direct zodra je verder typt (bespaart GPU).
+    JSX/TSX Support: Volledige ondersteuning voor React-bestanden toegevoegd.
+
+Changed
+
+    Performance Fix: Context verlaagd naar 8k en temperature naar 0 voor snellere reacties op de RTX 3060.
+    Dynamic Refresh: Popup ververst nu bij elke letter dankzij isIncomplete: true.
+    Modulaire Code: Logica gesplitst in aparte providers voor Autocomplete en Git.
+
+Fixed
+
+    Sticking Popups: Suggesties blijven niet meer hangen als je een nieuw woord begint te typen.

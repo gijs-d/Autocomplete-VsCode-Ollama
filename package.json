@@ -2,19 +2,24 @@
   "name": "autocomplete",
   "displayName": "autocomplete",
   "description": "",
-  "version": "0.0.2",
+  "version": "0.0.5",
   "engines": {
     "vscode": "^1.80.0"
   },
   "categories": [
     "Other"
-    
   ],
   "activationEvents": [
     "onLanguage:typescript",
     "onLanguage:javascript",
+    "onLanguage:javascriptreact",
+    "onLanguage:typescriptreact",
     "onLanguage:python",
-    "onLanguage:java"
+    "onLanguage:java",
+    "onCommand:autocompleter.generateCommit"
+  ],
+  "extensionDependencies": [
+    "vscode.git"
   ],
   "main": "./extension.js",
   "contributes": {
@@ -32,6 +37,21 @@
           "description": "The Ollama model to use for autocomplete suggestions (e.g., 'codellama', 'deepseek-coder')."
         }
       }
+    },
+    "commands": [
+      {
+        "command": "autocompleter.generateCommit",
+        "title": "AI Commit",
+        "icon": "$(sparkle)"
+      }
+    ],
+    "menus": {
+      "scm/title": [
+        {
+          "command": "autocompleter.generateCommit",
+          "group": "navigation"
+        }
+      ]
     }
   },
   "scripts": {
